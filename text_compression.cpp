@@ -34,8 +34,7 @@ TextCompression::~TextCompression()
 // @name                            : ClearData
 //
 // @description                     : Clears all the data structures which should be blank
-//                                    before performing compression/decryption. Should be called
-//                                    before doing any operation.
+//                                    before performing a new compression/decompression. 
 //
 // @returns                         : Nothing
 //----------------------------------------------------------------------------------------------
@@ -55,7 +54,7 @@ void TextCompression::ClearData()
 //----------------------------------------------------------------------------------------------
 // @name                            : Compress
 //
-// @description                     : 
+// @description                     : Creates a new compressed file with extension COMPRESSED_FILE_EXTENSION.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -83,9 +82,10 @@ bool TextCompression::Compress(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : PrepareWordDictionary
 //
-// @description                     : 
+// @description                     : Prepares the dictionary of all the words and their 
+//                                    coded representation.
 //
-// @returns                         : Size of the dictionary
+// @returns                         : Size of the dictionary formed
 //----------------------------------------------------------------------------------------------
 size_t TextCompression::PrepareWordDictionary()
 {
@@ -147,7 +147,8 @@ void TextCompression::DisplayDictionary()
 //----------------------------------------------------------------------------------------------
 // @name                            : ReadLinesFromFile
 //
-// @description                     : 
+// @description                     : Reads all the lines from the given filename and stores
+//                                    it in a vector of strings - m_lines.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -182,7 +183,7 @@ bool TextCompression::ReadLinesFromFile(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : CreateCompressedFile
 //
-// @description                     : 
+// @description                     : Creates compressed file
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -234,7 +235,9 @@ bool TextCompression::CreateCompressedFile(const string & inputFilename)
 //----------------------------------------------------------------------------------------------
 // @name                            : WriteCompressedHeader
 //
-// @description                     : 
+// @description                     : Write some header information in the compressed file. These
+//                                    will be used at the time of decompression to initialize
+//                                    the system.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -261,7 +264,8 @@ bool TextCompression::WriteCompressedHeader(ofstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : WriteCompressedData
 //
-// @description                     : 
+// @description                     : Write down the coded form of the data into the 
+//                                    compressed file.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -295,7 +299,7 @@ bool TextCompression::WriteCompressedData(ofstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : Decompress
 //
-// @description                     : 
+// @description                     : Creates a decompressed version of the provided file.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -317,7 +321,7 @@ bool TextCompression::Decompress(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : ReadCompressedFile
 //
-// @description                     : 
+// @description                     : Reads the content of compressed file. 
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -353,7 +357,7 @@ bool TextCompression::ReadCompressedFile(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : ReadCompressedHeader
 //
-// @description                     : 
+// @description                     : Reads the header and validates it with the current system.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -394,7 +398,9 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : ReadCompressedData
 //
-// @description                     : 
+// @description                     : Converts the coded words into their original form via
+//                                    dictionary lookup. The entire data is converted and
+//                                    all the lines are stored in a vector of strings - m_lines.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -425,7 +431,8 @@ bool TextCompression::ReadCompressedData(ifstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : CreateDecompressedFile
 //
-// @description                     : 
+// @description                     : Write the decompressed data in m_lines to the output
+//                                    file.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -470,7 +477,7 @@ bool TextCompression::CreateDecompressedFile(const string & inputFilename)
 //----------------------------------------------------------------------------------------------
 // @name                            : WriteDecompressedData
 //
-// @description                     : 
+// @description                     : Write all the lines to the file.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -488,7 +495,7 @@ bool TextCompression::WriteDecompressedData(ofstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : findCodedWordInDictionary
 //
-// @description                     : 
+// @description                     : Fetch the word for the given code.
 //
 // @returns                         : if coded word is present in dictionary then word for the 
 //                                    code is returned, else a NOT FOUND marker
