@@ -17,6 +17,7 @@ int main()
         return false;
     }
 
+    // Determine compressed filename
     string inputFilename = FILENAME;
     string compressedFilename = inputFilename.substr(0, extensionStart + 1);
     compressedFilename.append(COMPRESSED_FILE_EXTENSION);

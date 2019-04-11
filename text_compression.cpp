@@ -72,7 +72,7 @@ bool TextCompression::Compress(const string & filename)
     }
 
     // Prepare word dictionary
-    size_t uniquePatterns = PrepareWordDictionary();
+    size_t uniquePatterns = PreparePatternDictionary();
     //DisplayDictionary();
 
     // Write header and compressed data to file
@@ -80,14 +80,14 @@ bool TextCompression::Compress(const string & filename)
 }
 
 //----------------------------------------------------------------------------------------------
-// @name                            : PrepareWordDictionary
+// @name                            : PreparePatternDictionary
 //
 // @description                     : Prepares the dictionary of all the words and their 
 //                                    coded representation.
 //
 // @returns                         : Size of the dictionary formed
 //----------------------------------------------------------------------------------------------
-size_t TextCompression::PrepareWordDictionary()
+size_t TextCompression::PreparePatternDictionary()
 {
     printf("Preparing pattern dictionary...\n");
     for (int i = 0; i < m_lines.size(); i++)
@@ -281,7 +281,7 @@ bool TextCompression::WriteCompressedData(ofstream & fileStream)
         while (ss >> word)
         {
             // Find code of this word from dictionary
-            long int code = m_patternDictionary[word];
+            long int code = findCodeForPattern(word); 
             fileStream << code << " ";
         } // End of line
 
@@ -416,7 +416,7 @@ bool TextCompression::ReadCompressedData(ifstream & fileStream)
         string line;
         while (ss >> codedWord)
         {
-            string word = findCodedWordInDictionary(atol(codedWord.c_str()));
+            string word = findPatternFromCode(atol(codedWord.c_str()));
             line.append(word);
             line.append(" ");
         } // End of line
@@ -493,14 +493,14 @@ bool TextCompression::WriteDecompressedData(ofstream & fileStream)
 }
 
 //----------------------------------------------------------------------------------------------
-// @name                            : findCodedWordInDictionary
+// @name                            : findPatternFromCode
 //
 // @description                     : Fetch the word for the given code.
 //
 // @returns                         : if coded word is present in dictionary then word for the 
 //                                    code is returned, else a NOT FOUND marker
 //----------------------------------------------------------------------------------------------
-string TextCompression::findCodedWordInDictionary(long int codedWord)
+string TextCompression::findPatternFromCode(long int codedWord)
 {
     for (auto it = m_patternDictionary.begin(); it != m_patternDictionary.end(); it++)
     {
@@ -510,5 +510,18 @@ string TextCompression::findCodedWordInDictionary(long int codedWord)
         }
     }
 
+    // This should ideally not happen
     return CODED_WORD_NOT_FOUND_MARKER;
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : findCodeForPattern
+//
+// @description                     : Find out the code for the given pattern
+//
+// @returns                         : Code for the pattern
+//----------------------------------------------------------------------------------------------
+long int TextCompression::findCodeForPattern(const string & pattern)
+{
+    return m_patternDictionary[pattern];
 }

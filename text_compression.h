@@ -43,7 +43,7 @@ public:
 
     bool Compress(const string & filename);
     bool ReadLinesFromFile(const string & filename);
-    size_t PrepareWordDictionary();
+    size_t PreparePatternDictionary();
     bool CreateCompressedFile(const string & filename);
     bool WriteCompressedHeader(ofstream & fileStream);
     bool WriteCompressedData(ofstream & fileStream);
@@ -54,7 +54,8 @@ public:
     bool ReadCompressedData(ifstream & fileStream);
     bool CreateDecompressedFile(const string & inputFilename);
     bool WriteDecompressedData(ofstream & fileStream);
-    string findCodedWordInDictionary(long int codedWord);
+    string findPatternFromCode(long int codedWord);
+    long int findCodeForPattern(const string & pattern);
 
     void ClearData();
 };
