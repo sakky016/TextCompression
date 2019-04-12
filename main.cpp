@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------------------------
 // Configuration
 //-----------------------------------------------------------------------------------------
-const string FILENAME = "sampleFiles/hitch3.txt";
+const string FILENAME = "sampleFiles/simple1.txt";
 
 //-----------------------------------------------------------------------------------------
 // Get size of file in bytes
@@ -49,7 +49,7 @@ int main()
     printf("\n");
     printf("Input      %s     : %ld bytes\n", inputFilename.c_str(), GetFileSize(inputFilename));
     printf("Compressed %s     : %ld bytes\n", compressedFilename.c_str(), GetFileSize(compressedFilename));
-    printf("Compression ratio : %.2f\n", (float)GetFileSize(inputFilename) / GetFileSize(compressedFilename));
+    printf("Compression ratio : %.2f %%\n", 100 * ((float)(GetFileSize(inputFilename) - GetFileSize(compressedFilename))/ GetFileSize(compressedFilename)));
     getchar();
     return 0;
 }

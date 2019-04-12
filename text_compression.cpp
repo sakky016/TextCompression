@@ -1,8 +1,26 @@
+#include<algorithm>
+#include<assert.h>
 #include<iostream>
 #include <sstream>
 #include<stdio.h>
 #include  <stdlib.h>
 #include"text_compression.h"
+
+//----------------------------------------------------------------------------------------------
+// @name                            : less_second
+//
+// @description                     : This is a comparator used to sort on the basis of the 
+//                                    second parameter in a pair.
+//----------------------------------------------------------------------------------------------
+template <typename T1, typename T2>
+struct less_second
+{
+    typedef pair<T1, T2> type;
+    bool operator ()(type const& a, type const& b) const
+    {
+        return a.second < b.second;
+    }
+};
 
 //----------------------------------------------------------------------------------------------
 // @name                            : TextCompression
@@ -73,14 +91,9 @@ bool TextCompression::Compress(const string & filename)
 
     // Prepare word dictionary
     size_t uniquePatterns = PreparePatternDictionary();
-    DisplayPatternDictionary();
-    DisplayOccuranceCountDictionary();
-    printf("Dictionary size: %ld\n", uniquePatterns);
 
-    uniquePatterns = OptimizePatternDictionary();
     DisplayPatternDictionary();
     DisplayOccuranceCountDictionary();
-    printf("Dictionary size after optimization: %ld\n", uniquePatterns);
 
     // Write header and compressed data to file
     return CreateCompressedFile(filename);
@@ -89,70 +102,39 @@ bool TextCompression::Compress(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : PreparePatternDictionary
 //
-// @description                     : Prepares the dictionary of all the words and their 
-//                                    coded representation.
+// @description                     : Creates dicitionary of pattern.
 //
-// @returns                         : Size of the dictionary formed
+// @returns                         : Size of the pattern dictionary
 //----------------------------------------------------------------------------------------------
 size_t TextCompression::PreparePatternDictionary()
 {
     printf("Preparing pattern dictionary...\n");
-    for (size_t i = 0; i < m_lines.size(); i++)
+
+    size_t uniquePatterns = PreparePatternCountDictionary();
+
+    vector<pair<string, unsigned long> > patternCountVector(m_patternCountDictionary.begin(), m_patternCountDictionary.end());
+    sort(patternCountVector.begin(), patternCountVector.end(), less_second<string, unsigned long>());
+
+    for (size_t i = patternCountVector.size() - 1; i > 0 ; i--)
     {
-        string line = m_lines[i];
-        stringstream ss(line);
-        string word;
+        string pattern = patternCountVector[i].first;
+        unsigned long occurance = patternCountVector[i].second;
+        string code = to_string(m_patternCodeIndex);
 
-        // Extract words from the line
-        while (ss >> word)
+        // Calculate the header space that will be required to store this pattern in
+        // the compressed file.
+        int headerSizeForCode = pattern.size() + 1 + code.size();
+
+        // If space can be saved on using coded word instead of the pattern, then we
+        // add this pattern and code to our pattern dictionary.
+        if (((code.size() * occurance) + headerSizeForCode )< pattern.size() * occurance)
         {
-            m_totalPatterns++;
-            m_patternCountDictionary[word]++;
+            m_patternDictionary[pattern] = code;
+            m_patternCodeIndex++;
+        }
+    }
 
-            // Find is not required, as map already ensures that we don't have
-            // duplicate entries. But we need to make sure the m_patternCodeIndex
-            // gets updated only once for a pattern
-            // Check if this word is already present in our map
-            auto it = m_patternDictionary.find(word);
-            if (it == m_patternDictionary.end())
-            {
-                // Not present, add it to our dictionary. Additionally we are ensuring
-                // that the coded word's length is not more than the word's length. This
-                // defeats the very purpose of coding the words.
-                string code = to_string(m_patternCodeIndex);
-                if (code.size() < word.size())
-                {
-                    m_patternDictionary[word] = code;
-                    m_patternCodeIndex++;
-                }
-            }
-            else
-            {
-                // DO NOTHING. Ignore this word.
-            }
-        } // End of line
-    }//End of file
-
-    printf("\n");
-    printf("Total words   : %ld\n", m_totalPatterns);
-    printf("Unique words  : %ld\n", m_patternDictionary.size());
-    printf("Ratio         : %.2f\n", (float)m_totalPatterns/m_patternDictionary.size());
-    printf("\n");
-
-    return m_patternDictionary.size();
-}
-
-//----------------------------------------------------------------------------------------------
-// @name                            : OptimizePatternDictionary
-//
-// @description                     : Applies some optimizations to the dictionary so as to save
-//                                    space.
-//
-// @returns                         : Size of the modified dictionary
-//----------------------------------------------------------------------------------------------
-size_t TextCompression::OptimizePatternDictionary()
-{
-    printf("Optimizing pattern dictionary...\n");
+#if 0
     auto patternDict_it = m_patternDictionary.begin();
     auto patternCountDict_it = m_patternCountDictionary.begin();
 
@@ -164,7 +146,7 @@ size_t TextCompression::OptimizePatternDictionary()
         if (patternCountDict_it == m_patternCountDictionary.end())
         {
             printf("INCONSISTENCY!\n");
-            break;
+            assert(0);
         }
 
         unsigned long occurance = patternCountDict_it->second;
@@ -182,7 +164,41 @@ size_t TextCompression::OptimizePatternDictionary()
             patternDict_it++;
         }
     }
-    
+#endif
+    printf("\n");
+    printf("Total words   : %ld\n", m_totalPatterns);
+    printf("Unique words  : %ld\n", m_patternDictionary.size());
+    printf("Ratio         : %.2f\n", (float)m_totalPatterns / m_patternDictionary.size());
+    printf("\n");
+
+    return m_patternDictionary.size();
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : PreparePatternCountDictionary
+//
+// @description                     : Prepares the dictionary of all the words and their 
+//                                    occurance count.
+//
+// @returns                         : Size of the dictionary formed
+//----------------------------------------------------------------------------------------------
+size_t TextCompression::PreparePatternCountDictionary()
+{
+    printf("Preparing pattern count dictionary...\n");
+    for (size_t i = 0; i < m_lines.size(); i++)
+    {
+        string line = m_lines[i];
+        stringstream ss(line);
+        string word;
+
+        // Extract words from the line
+        while (ss >> word)
+        {
+            m_totalPatterns++;
+            m_patternCountDictionary[word]++;
+        } // End of line
+    }//End of file
+
     printf("\n");
     printf("Total words   : %ld\n", m_totalPatterns);
     printf("Unique words  : %ld\n", m_patternDictionary.size());

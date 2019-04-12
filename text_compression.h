@@ -13,12 +13,6 @@ using namespace std;
 //-----------------------------------------------------------------------------------------
 const string COMPRESSED_FILE_EXTENSION = "xix";
 
-// This controls the patterns which have to be converted to coded form. So for instance
-// if this value is 2, then it means that after coding the size occupied by all the occurances
-// of a particular pattern will take 1/2 the space. Lower this value, more patterns will be
-// converted into coded form (for compression)
-const float SPACE_SAVE_FACTOR = 1.5;
-
 //-----------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------
@@ -50,8 +44,8 @@ public:
 
     bool Compress(const string & filename);
     bool ReadLinesFromFile(const string & filename);
+    size_t PreparePatternCountDictionary();
     size_t PreparePatternDictionary();
-    size_t OptimizePatternDictionary();
     bool CreateCompressedFile(const string & filename);
     bool WriteCompressedHeader(ofstream & fileStream);
     bool WriteCompressedData(ofstream & fileStream);
