@@ -23,6 +23,65 @@ struct less_second
 };
 
 //----------------------------------------------------------------------------------------------
+// @name                            : ConvertSpaces
+//
+// @description                     : Replaces leading spaces to '0'. This is required to preserve
+//                                    document in original form (with spaces)
+//----------------------------------------------------------------------------------------------
+void ConvertSpaces(string & line)
+{
+    // Replace all the leading spaces with '0'
+    if (line[0] == ' ')
+    {
+        for (size_t i = 0; i < line.size() - 1; i++)
+        {
+            if (line[i] == ' ' && line[i + 1] == ' ')
+            {
+                line[i] = '0';
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : isAllSpaces
+//
+// @description                     : Checks if the given word is formed by ConvertSpaces API
+//----------------------------------------------------------------------------------------------
+bool isAllSpaces(string word)
+{
+    for (int i = 0; i < word.size(); i++)
+    {
+        if (word[i] != '0')
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : recoverSpaces
+//
+// @description                     : Converts the word with coded ('0') spaces to actual spaces
+//----------------------------------------------------------------------------------------------
+string recoverSpaces(string word)
+{
+    string result;
+    for (int i = 0; i < word.size(); i++)
+    {
+        result.push_back(' ');
+    }
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------
 // @name                            : TextCompression
 //
 // @description                     : Constructor
@@ -62,7 +121,7 @@ void TextCompression::ClearData()
     m_patternDictionary.clear();
     m_uncompressedFileExtension.clear();
     m_totalPatterns = 0;
-    m_patternCodeIndex = 0;
+    m_patternCodeIndex = 1; // 0 is code for <space> character
 }
 
 //************************************************************************************************************
@@ -92,8 +151,8 @@ bool TextCompression::Compress(const string & filename)
     // Prepare word dictionary
     size_t uniquePatterns = PreparePatternDictionary();
 
-    DisplayPatternDictionary();
-    DisplayOccuranceCountDictionary();
+    //DisplayPatternDictionary();
+    //DisplayOccuranceCountDictionary();
 
     // Write header and compressed data to file
     return CreateCompressedFile(filename);
@@ -156,25 +215,25 @@ size_t TextCompression::PreparePatternCountDictionary()
     printf("Preparing pattern count dictionary...\n");
     for (size_t i = 0; i < m_lines.size(); i++)
     {
+        if (PRESERVE_LEADING_SPACES)
+        {
+            ConvertSpaces(m_lines[i]);
+        }
+
         string line = m_lines[i];
         stringstream ss(line);
         string word;
 
         // Extract words from the line
-        // TODO: The demerit of using this is that leading spaces
-        // will be ignored
         while (ss >> word)
         {
-            m_totalPatterns++;
-            m_patternCountDictionary[word]++;
+            if (!isAllSpaces(word))
+            {
+                m_totalPatterns++;
+                m_patternCountDictionary[word]++;
+            }
         } // End of line
     }//End of file
-
-    printf("\n");
-    printf("Total words   : %ld\n", m_totalPatterns);
-    printf("Unique words  : %ld\n", m_patternDictionary.size());
-    printf("Ratio         : %.2f\n", (float)m_totalPatterns / m_patternDictionary.size());
-    printf("\n");
 
     return m_patternDictionary.size();
 }
@@ -356,8 +415,17 @@ bool TextCompression::WriteCompressedData(ofstream & fileStream)
         // Extract words from the line
         while (ss >> word)
         {
+            string code;
             // Find code of this word from dictionary
-            string code = findCodeForPattern(word); 
+            if (isAllSpaces(word))
+            {
+                code = word;
+            }
+            else
+            {
+                code = findCodeForPattern(word);
+            }
+            
             fileStream << code << " ";
         } // End of line
 
@@ -502,12 +570,24 @@ bool TextCompression::ReadCompressedData(ifstream & fileStream)
         string line;
         while (ss >> codedWord)
         {
-            string word = findPatternFromCode(codedWord);
+            string word;
+            if (isAllSpaces(codedWord))
+            {
+                word = recoverSpaces(codedWord);
+            }
+            else
+            {
+                word = findPatternFromCode(codedWord);
+            }
+
             line.append(word);
             line.append(" ");
         } // End of line
 
-        m_lines.push_back(line);
+        if (line.size())
+        {
+            m_lines.push_back(line);
+        }
     }// End of file
 
     cout << "Data lines: " << m_lines.size()<<endl;

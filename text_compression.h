@@ -13,6 +13,9 @@ using namespace std;
 //-----------------------------------------------------------------------------------------
 const string COMPRESSED_FILE_EXTENSION = "xix";
 
+// If there are leading spaces, then these are preserved on compression
+const bool PRESERVE_LEADING_SPACES = true;
+
 //-----------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------
