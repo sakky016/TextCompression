@@ -18,9 +18,6 @@
     <ClInclude Include="text_compression.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tokenizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="text_compression.cpp">
@@ -28,9 +25,6 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tokenizer.cpp">
-      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -114,12 +114,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="text_compression.h" />
-    <ClInclude Include="tokenizer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="text_compression.cpp" />
-    <ClCompile Include="tokenizer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

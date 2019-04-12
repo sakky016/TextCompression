@@ -510,8 +510,8 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
     // Algorithm used
     int algorithmFromFile;
     fileStream >> algorithmFromFile;
-    printf("\nReading header from compressed file...\n");
-    printf("algorithmFromFile: %d, m_alogrithm: %d\n", algorithmFromFile, m_alogrithm);
+    //printf("\nReading header from compressed file...\n");
+    //printf("algorithmFromFile: %d, m_alogrithm: %d\n", algorithmFromFile, m_alogrithm);
     if (algorithmFromFile != m_alogrithm)
     {
         printf("Algorithm mismatch!\n");
@@ -520,12 +520,12 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
 
     // File extension before compression
     fileStream >> m_uncompressedFileExtension;
-    cout << "m_uncompressedFileExtension: " << m_uncompressedFileExtension << endl;
+    //cout << "m_uncompressedFileExtension: " << m_uncompressedFileExtension << endl;
 
     // Size of dictionary
     size_t dictSize = 0;
     fileStream >> dictSize;
-    cout << "dictSize: " << dictSize << endl;
+    //cout << "dictSize: " << dictSize << endl;
 
     // Content of dictionary
     for (size_t i = 0; i < dictSize; i++)
@@ -545,7 +545,7 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
         m_patternDictionary[to_string(code)] = pattern;
     }
 
-    printf("[ DONE ]\n");
+    //printf("[ DONE ]\n");
     return true;
 }
 

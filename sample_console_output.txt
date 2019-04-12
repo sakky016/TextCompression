@@ -1,0 +1,21 @@
+Input File: sampleFiles/hitch2.txt
+Loading file...
+Lines in file: 113526
+Preparing pattern dictionary...
+Preparing pattern count dictionary...
+
+Total words   : 749504
+Unique words  : 8920
+Ratio         : 84.03
+
+Output file: sampleFiles/hitch2.xix
+
+*** Compression: SUCCESS
+Data lines: 82376
+Output file: sampleFiles/hitch2_decompressed.txt
+
+*** Decompression: SUCCESS
+
+Input      sampleFiles/hitch2.txt     : 4586330 bytes
+Compressed sampleFiles/hitch2.xix     : 2993346 bytes
+Compression ratio : 53.22 %
