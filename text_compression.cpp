@@ -134,37 +134,6 @@ size_t TextCompression::PreparePatternDictionary()
         }
     }
 
-#if 0
-    auto patternDict_it = m_patternDictionary.begin();
-    auto patternCountDict_it = m_patternCountDictionary.begin();
-
-    while (patternDict_it != m_patternDictionary.end())
-    {
-        string pattern = patternDict_it->first;
-        string code = patternDict_it->second;
-        patternCountDict_it = m_patternCountDictionary.find(pattern);
-        if (patternCountDict_it == m_patternCountDictionary.end())
-        {
-            printf("INCONSISTENCY!\n");
-            assert(0);
-        }
-
-        unsigned long occurance = patternCountDict_it->second;
-
-        if ((float(pattern.size() * occurance) / (code.size() * occurance)) < SPACE_SAVE_FACTOR)
-        {
-            // Delete this pattern from m_patternDictionary 
-            patternDict_it = m_patternDictionary.erase(patternDict_it);
-
-            // Delete this patterns record in m_patternCountDictionary
-            patternCountDict_it = m_patternCountDictionary.erase(patternCountDict_it);
-        }
-        else
-        {
-            patternDict_it++;
-        }
-    }
-#endif
     printf("\n");
     printf("Total words   : %ld\n", m_totalPatterns);
     printf("Unique words  : %ld\n", m_patternDictionary.size());
@@ -192,6 +161,8 @@ size_t TextCompression::PreparePatternCountDictionary()
         string word;
 
         // Extract words from the line
+        // TODO: The demerit of using this is that leading spaces
+        // will be ignored
         while (ss >> word)
         {
             m_totalPatterns++;
