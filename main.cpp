@@ -3,7 +3,17 @@
 //-----------------------------------------------------------------------------------------
 // Configuration
 //-----------------------------------------------------------------------------------------
-const string FILENAME = "sampleFiles/solitary.txt";
+const string FILENAME = "sampleFiles/hitch3.txt";
+
+//-----------------------------------------------------------------------------------------
+// Get size of file in bytes
+//-----------------------------------------------------------------------------------------
+long GetFileSize(const string & filename)
+{
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
+}
 
 //-----------------------------------------------------------------------------------------
 // Main 
@@ -26,16 +36,20 @@ int main()
 
     bool doneCompression = tc.Compress(inputFilename);
     if (doneCompression)
-        printf("Compression: SUCCESS\n");
+        printf("\n*** Compression: SUCCESS\n");
     else
-        printf("Compression: FAILED\n");
+        printf("\n*** Compression: FAILED\n");
 
     bool doneDecompression = tc.Decompress(compressedFilename);
     if (doneDecompression)
-        printf("Decompression: SUCCESS\n");
+        printf("\n*** Decompression: SUCCESS\n");
     else
-        printf("Decompression: FAILED\n");
+        printf("\n*** Decompression: FAILED\n");
 
+    printf("\n");
+    printf("Input      %s     : %ld bytes\n", inputFilename.c_str(), GetFileSize(inputFilename));
+    printf("Compressed %s     : %ld bytes\n", compressedFilename.c_str(), GetFileSize(compressedFilename));
+    printf("Compression ratio : %.2f\n", (float)GetFileSize(inputFilename) / GetFileSize(compressedFilename));
     getchar();
     return 0;
 }

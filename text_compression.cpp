@@ -73,7 +73,14 @@ bool TextCompression::Compress(const string & filename)
 
     // Prepare word dictionary
     size_t uniquePatterns = PreparePatternDictionary();
-    //DisplayDictionary();
+    DisplayPatternDictionary();
+    DisplayOccuranceCountDictionary();
+    printf("Dictionary size: %ld\n", uniquePatterns);
+
+    uniquePatterns = OptimizePatternDictionary();
+    DisplayPatternDictionary();
+    DisplayOccuranceCountDictionary();
+    printf("Dictionary size after optimization: %ld\n", uniquePatterns);
 
     // Write header and compressed data to file
     return CreateCompressedFile(filename);
@@ -90,7 +97,7 @@ bool TextCompression::Compress(const string & filename)
 size_t TextCompression::PreparePatternDictionary()
 {
     printf("Preparing pattern dictionary...\n");
-    for (int i = 0; i < m_lines.size(); i++)
+    for (size_t i = 0; i < m_lines.size(); i++)
     {
         string line = m_lines[i];
         stringstream ss(line);
@@ -100,21 +107,31 @@ size_t TextCompression::PreparePatternDictionary()
         while (ss >> word)
         {
             m_totalPatterns++;
+            m_patternCountDictionary[word]++;
 
+            // Find is not required, as map already ensures that we don't have
+            // duplicate entries. But we need to make sure the m_patternCodeIndex
+            // gets updated only once for a pattern
             // Check if this word is already present in our map
             auto it = m_patternDictionary.find(word);
             if (it == m_patternDictionary.end())
             {
-                // Not present, add it to our dictionary
-                m_patternDictionary[word] = m_patternCodeIndex;
-                m_patternCodeIndex++;
+                // Not present, add it to our dictionary. Additionally we are ensuring
+                // that the coded word's length is not more than the word's length. This
+                // defeats the very purpose of coding the words.
+                string code = to_string(m_patternCodeIndex);
+                if (code.size() < word.size())
+                {
+                    m_patternDictionary[word] = code;
+                    m_patternCodeIndex++;
+                }
             }
             else
             {
                 // DO NOTHING. Ignore this word.
             }
-        }
-    }
+        } // End of line
+    }//End of file
 
     printf("\n");
     printf("Total words   : %ld\n", m_totalPatterns);
@@ -126,13 +143,63 @@ size_t TextCompression::PreparePatternDictionary()
 }
 
 //----------------------------------------------------------------------------------------------
-// @name                            : DisplayDictionary
+// @name                            : OptimizePatternDictionary
+//
+// @description                     : Applies some optimizations to the dictionary so as to save
+//                                    space.
+//
+// @returns                         : Size of the modified dictionary
+//----------------------------------------------------------------------------------------------
+size_t TextCompression::OptimizePatternDictionary()
+{
+    printf("Optimizing pattern dictionary...\n");
+    auto patternDict_it = m_patternDictionary.begin();
+    auto patternCountDict_it = m_patternCountDictionary.begin();
+
+    while (patternDict_it != m_patternDictionary.end())
+    {
+        string pattern = patternDict_it->first;
+        string code = patternDict_it->second;
+        patternCountDict_it = m_patternCountDictionary.find(pattern);
+        if (patternCountDict_it == m_patternCountDictionary.end())
+        {
+            printf("INCONSISTENCY!\n");
+            break;
+        }
+
+        unsigned long occurance = patternCountDict_it->second;
+
+        if ((float(pattern.size() * occurance) / (code.size() * occurance)) < SPACE_SAVE_FACTOR)
+        {
+            // Delete this pattern from m_patternDictionary 
+            patternDict_it = m_patternDictionary.erase(patternDict_it);
+
+            // Delete this patterns record in m_patternCountDictionary
+            patternCountDict_it = m_patternCountDictionary.erase(patternCountDict_it);
+        }
+        else
+        {
+            patternDict_it++;
+        }
+    }
+    
+    printf("\n");
+    printf("Total words   : %ld\n", m_totalPatterns);
+    printf("Unique words  : %ld\n", m_patternDictionary.size());
+    printf("Ratio         : %.2f\n", (float)m_totalPatterns / m_patternDictionary.size());
+    printf("\n");
+
+    return m_patternDictionary.size();
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : DisplayPatternDictionary
 //
 // @description                     : Display all the words and their corresponding codes.
 //
 // @returns                         : Nothing
 //----------------------------------------------------------------------------------------------
-void TextCompression::DisplayDictionary()
+void TextCompression::DisplayPatternDictionary()
 {
     printf("\n");
     printf("+----------------------------------------------+\n");
@@ -140,7 +207,26 @@ void TextCompression::DisplayDictionary()
     printf("+----------------------------------------------+\n");
     for (auto it = m_patternDictionary.begin(); it != m_patternDictionary.end(); it++)
     {
-        printf("%-30s : %ld\n", it->first.c_str(), it->second);
+        printf("%-30s : %s\n", it->first.c_str(), it->second.c_str());
+    }
+}
+
+//----------------------------------------------------------------------------------------------
+// @name                            : DisplayOccuranceCountDictionary
+//
+// @description                     : Display all the words and their corresponding occurance counts.
+//
+// @returns                         : Nothing
+//----------------------------------------------------------------------------------------------
+void TextCompression::DisplayOccuranceCountDictionary()
+{
+    printf("\n");
+    printf("+----------------------------------------------+\n");
+    printf("| Word                            Occurances   |\n");
+    printf("+----------------------------------------------+\n");
+    for (auto it = m_patternCountDictionary.begin(); it != m_patternCountDictionary.end(); it++)
+    {
+        printf("%-30s : %lu\n", it->first.c_str(), it->second);
     }
 }
 
@@ -252,7 +338,10 @@ bool TextCompression::WriteCompressedHeader(ofstream & fileStream)
     // Size of dictionary
     fileStream << m_patternDictionary.size() << endl;
 
-    // Content of dictionary
+    // Content of dictionary. Here we are storing in the format:
+    // pattern<space>codeWord, where
+    // key   : pattern (word)
+    // value : codeWord
     for (auto it = m_patternDictionary.begin(); it != m_patternDictionary.end(); it++)
     {
         fileStream << it->first << " " << it->second << endl;
@@ -271,7 +360,7 @@ bool TextCompression::WriteCompressedHeader(ofstream & fileStream)
 //----------------------------------------------------------------------------------------------
 bool TextCompression::WriteCompressedData(ofstream & fileStream)
 {
-    for (int i = 0; i < m_lines.size(); i++)
+    for (size_t i = 0; i < m_lines.size(); i++)
     {
         string line = m_lines[i];
         stringstream ss(line);
@@ -281,7 +370,7 @@ bool TextCompression::WriteCompressedData(ofstream & fileStream)
         while (ss >> word)
         {
             // Find code of this word from dictionary
-            long int code = findCodeForPattern(word); 
+            string code = findCodeForPattern(word); 
             fileStream << code << " ";
         } // End of line
 
@@ -366,6 +455,7 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
     // Algorithm used
     int algorithmFromFile;
     fileStream >> algorithmFromFile;
+    printf("\nReading header from compressed file...\n");
     printf("algorithmFromFile: %d, m_alogrithm: %d\n", algorithmFromFile, m_alogrithm);
     if (algorithmFromFile != m_alogrithm)
     {
@@ -388,10 +478,19 @@ bool TextCompression::ReadCompressedHeader(ifstream & fileStream)
         string pattern;
         long int code = 0;
         fileStream >> pattern >> code;
-        m_patternDictionary[pattern] = code;
+        
+        // Preparing dictionary. Here we are storing in the format:
+        // codeWord<space>pattern, where
+        // key   : codeWord
+        // value : pattern (word)
+        // This is the reverse of that used at the time of creating the 
+        // compressed file. This is being done for faster lookup at the 
+        // time of decompression. This is possible because both pattern
+        // and the codedWord are unique for each entry.
+        m_patternDictionary[to_string(code)] = pattern;
     }
 
-    cout << "dictionary size: " << m_patternDictionary.size() << endl;
+    printf("[ DONE ]\n");
     return true;
 }
 
@@ -416,7 +515,7 @@ bool TextCompression::ReadCompressedData(ifstream & fileStream)
         string line;
         while (ss >> codedWord)
         {
-            string word = findPatternFromCode(atol(codedWord.c_str()));
+            string word = findPatternFromCode(codedWord);
             line.append(word);
             line.append(" ");
         } // End of line
@@ -484,7 +583,7 @@ bool TextCompression::CreateDecompressedFile(const string & inputFilename)
 bool TextCompression::WriteDecompressedData(ofstream & fileStream)
 {
     // Writing data to file
-    for (int i = 0; i < m_lines.size(); i++)
+    for (size_t i = 0; i < m_lines.size(); i++)
     {
         fileStream << m_lines[i] << endl;
     }
@@ -498,20 +597,18 @@ bool TextCompression::WriteDecompressedData(ofstream & fileStream)
 // @description                     : Fetch the word for the given code.
 //
 // @returns                         : if coded word is present in dictionary then word for the 
-//                                    code is returned, else a NOT FOUND marker
+//                                    code is returned, else a codedWord itself is returned
 //----------------------------------------------------------------------------------------------
-string TextCompression::findPatternFromCode(long int codedWord)
+string TextCompression::findPatternFromCode(const string & codedWord)
 {
-    for (auto it = m_patternDictionary.begin(); it != m_patternDictionary.end(); it++)
+    auto it = m_patternDictionary.find(codedWord);
+    if (it != m_patternDictionary.end())
     {
-        if (it->second == codedWord)
-        {
-            return it->first;
-        }
+        return it->second;
     }
 
-    // This should ideally not happen
-    return CODED_WORD_NOT_FOUND_MARKER;
+    // No pattern available for this codeWord
+    return codedWord;
 }
 
 //----------------------------------------------------------------------------------------------
@@ -519,9 +616,17 @@ string TextCompression::findPatternFromCode(long int codedWord)
 //
 // @description                     : Find out the code for the given pattern
 //
-// @returns                         : Code for the pattern
+// @returns                         : Code for the pattern if present, otherwise the pattern
+//                                    itself is returned
 //----------------------------------------------------------------------------------------------
-long int TextCompression::findCodeForPattern(const string & pattern)
+string TextCompression::findCodeForPattern(const string & pattern)
 {
-    return m_patternDictionary[pattern];
+    auto it = m_patternDictionary.find(pattern);
+    if (it != m_patternDictionary.end())
+    {
+        return it->second;
+    }
+
+    // No code present for this pattern
+    return pattern;
 }
