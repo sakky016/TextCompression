@@ -161,7 +161,10 @@ bool TextCompression::Compress(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : PreparePatternDictionary
 //
-// @description                     : Creates dicitionary of pattern.
+// @description                     : Creates dicitionary of pattern. Higher the occurance of
+//                                    the pattern, smaller is its coded representation. Additionally,
+//                                    it also checks if net space is saved if the pattern is 
+//                                    represented by its coded version.
 //
 // @returns                         : Size of the pattern dictionary
 //----------------------------------------------------------------------------------------------
@@ -171,6 +174,9 @@ size_t TextCompression::PreparePatternDictionary()
 
     size_t uniquePatterns = PreparePatternCountDictionary();
 
+    // Sorting the patterns as per their occurance count. This is done so as 
+    // to assign smaller code to patterns that occur most frequently. This is
+    // important to provide effective compression.
     vector<pair<string, unsigned long> > patternCountVector(m_patternCountDictionary.begin(), m_patternCountDictionary.end());
     sort(patternCountVector.begin(), patternCountVector.end(), less_second<string, unsigned long>());
 
@@ -206,7 +212,9 @@ size_t TextCompression::PreparePatternDictionary()
 // @name                            : PreparePatternCountDictionary
 //
 // @description                     : Prepares the dictionary of all the words and their 
-//                                    occurance count.
+//                                    occurance count. This helps in analysing their frequency
+//                                    and assign codes to them so as to effectively save
+//                                    space during storage in file.
 //
 // @returns                         : Size of the dictionary formed
 //----------------------------------------------------------------------------------------------
@@ -315,7 +323,9 @@ bool TextCompression::ReadLinesFromFile(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : CreateCompressedFile
 //
-// @description                     : Creates compressed file
+// @description                     : Writes down the header and the actual coded data to
+//                                    the compressed file. The new file thus created will have
+//                                    same name but extension as defined by COMPRESSED_FILE_EXTENSION.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -465,7 +475,9 @@ bool TextCompression::Decompress(const string & filename)
 //----------------------------------------------------------------------------------------------
 // @name                            : ReadCompressedFile
 //
-// @description                     : Reads the content of compressed file. 
+// @description                     : Reads the header and data of compressed file. The codes
+//                                    are converted to their corresponding patterns an stored
+//                                    in m_lines (vector of strings)
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -615,6 +627,8 @@ bool TextCompression::CreateDecompressedFile(const string & inputFilename)
         return false;
     }
 
+    // Form the output file name. It preserves the input filename
+    // and extension.
     string outputFilename = inputFilename.substr(0, extensionStart);
     outputFilename.append("_decompressed.");
     outputFilename.append(m_uncompressedFileExtension);
@@ -643,7 +657,8 @@ bool TextCompression::CreateDecompressedFile(const string & inputFilename)
 //----------------------------------------------------------------------------------------------
 // @name                            : WriteDecompressedData
 //
-// @description                     : Write all the lines to the file.
+// @description                     : Write the contents of m_lines to the file. m_lines 
+//                                    basically has the actual patterns/words.
 //
 // @returns                         : true if successful, false otherwise
 //----------------------------------------------------------------------------------------------
@@ -661,10 +676,10 @@ bool TextCompression::WriteDecompressedData(ofstream & fileStream)
 //----------------------------------------------------------------------------------------------
 // @name                            : findPatternFromCode
 //
-// @description                     : Fetch the word for the given code.
+// @description                     : Fetch the pattern for the given code.
 //
 // @returns                         : if coded word is present in dictionary then word for the 
-//                                    code is returned, else a codedWord itself is returned
+//                                    code is returned, else 'codedWord' itself is returned
 //----------------------------------------------------------------------------------------------
 string TextCompression::findPatternFromCode(const string & codedWord)
 {
